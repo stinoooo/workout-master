@@ -1,0 +1,352 @@
+{% extends "authenticated-base.html" %}
+
+{% block title %}AI Assistant{% endblock %}
+
+{% block additional_styles %}
+<style>
+    .chat-container {
+        height: calc(100vh - 340px);
+        min-height: 280px;
+        max-height: 500px;
+        overflow-y: auto;
+        background: linear-gradient(180deg, #f5f9ff, #ecf3fc);
+        border-radius: 12px;
+        border: 1px solid rgba(138, 179, 216, 0.3);
+        padding: 1rem;
+    }
+
+    .chat-message {
+        margin-bottom: 1rem;
+        animation: fadeInUp 0.3s ease-out;
+    }
+
+    .chat-message-user {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .chat-message-assistant {
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .chat-bubble {
+        max-width: 85%;
+        padding: 0.875rem 1rem;
+        border-radius: 16px;
+        position: relative;
+    }
+
+    .chat-bubble-user {
+        background: linear-gradient(135deg, #0d4ea8, #2f87f6);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .chat-bubble-assistant {
+        background: white;
+        border: 1px solid rgba(138, 179, 216, 0.3);
+        color: #193354;
+        border-bottom-left-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .chat-author {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        opacity: 0.7;
+    }
+
+    .chat-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 0.25rem;
+    }
+
+    .chat-avatar-user {
+        background: linear-gradient(135deg, #0d4ea8, #2f87f6);
+        color: white;
+        margin-left: 0.5rem;
+    }
+
+    .chat-avatar-assistant {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        margin-right: 0.5rem;
+    }
+
+    .chat-typing {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.5rem 0;
+    }
+
+    .chat-typing-dot {
+        width: 8px;
+        height: 8px;
+        background: #9ca3af;
+        border-radius: 50%;
+        animation: bounce 1.4s ease-in-out infinite;
+    }
+
+    .chat-typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .chat-typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    .suggestion-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .suggestion-chip {
+        background: rgba(47, 135, 246, 0.1);
+        border: 1px solid rgba(47, 135, 246, 0.3);
+        color: #0d4ea8;
+        padding: 0.5rem 1rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .suggestion-chip:hover {
+        background: rgba(47, 135, 246, 0.2);
+        transform: translateY(-2px);
+    }
+
+    @media (min-width: 768px) {
+        .chat-container {
+            height: calc(100vh - 380px);
+            max-height: 600px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid px-0 px-md-3">
+    <div class="wm-hero">
+        <h2 class="page-headline">
+            <span class="material-symbols-outlined me-2" style="vertical-align: middle;">smart_toy</span>
+            Workout AI Assistant
+        </h2>
+        <p class="page-subtitle">Ask for routine ideas, workout suggestions, and adjustments for your goals.</p>
+        <div class="wm-pills">
+            <span class="wm-pill">
+                <span class="material-symbols-outlined">psychology</span>
+                AI Powered
+            </span>
+            <span class="wm-pill">
+                <span class="material-symbols-outlined">tips_and_updates</span>
+                Personalized Tips
+            </span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-lg-10 col-xl-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="suggestion-chips" id="suggestion-chips">
+                        <button class="suggestion-chip" onclick="sendSuggestion('Build me a beginner leg day routine')">
+                            <span class="material-symbols-outlined me-1" style="font-size: 14px;">fitness_center</span>
+                            Leg day routine
+                        </button>
+                        <button class="suggestion-chip" onclick="sendSuggestion('What exercises are best for building chest muscles?')">
+                            <span class="material-symbols-outlined me-1" style="font-size: 14px;">help</span>
+                            Best chest exercises
+                        </button>
+                        <button class="suggestion-chip" onclick="sendSuggestion('Create a 3-day full body workout split')">
+                            <span class="material-symbols-outlined me-1" style="font-size: 14px;">calendar_month</span>
+                            Full body split
+                        </button>
+                    </div>
+
+                    <div id="chat-log" class="chat-container dark-scrollbar">
+                        <div class="chat-message chat-message-assistant">
+                            <div class="chat-avatar chat-avatar-assistant">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">smart_toy</span>
+                            </div>
+                            <div>
+                                <div class="chat-author">Assistant</div>
+                                <div class="chat-bubble chat-bubble-assistant">
+                                    <span class="material-symbols-outlined me-1" style="font-size: 16px; vertical-align: middle;">waving_hand</span>
+                                    Hi! I'm your workout assistant. Ask me about exercises, routines, or fitness tips. How can I help you today?
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="assistant-chat-form" class="d-flex flex-column flex-sm-row gap-2 mt-3">
+                        <div class="input-icon-wrapper flex-grow-1">
+                            <span class="input-icon material-symbols-outlined">chat</span>
+                            <input
+                                id="assistant-message"
+                                type="text"
+                                class="form-control"
+                                style="padding-left: 2.75rem;"
+                                placeholder="Ask about workouts, routines, or fitness goals..."
+                                maxlength="4000"
+                                required
+                            >
+                        </div>
+                        <button class="btn btn-primary" type="submit" id="send-btn">
+                            <span class="material-symbols-outlined" id="send-icon">send</span>
+                            <span class="spinner-sm d-none" id="send-spinner"></span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block subpage_scripts %}
+<script>
+    const chatLog = document.getElementById("chat-log");
+    const form = document.getElementById("assistant-chat-form");
+    const messageInput = document.getElementById("assistant-message");
+    const suggestionChips = document.getElementById("suggestion-chips");
+    const sendBtn = document.getElementById("send-btn");
+    const sendIcon = document.getElementById("send-icon");
+
+    function addMessage(author, text, type) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "chat-message chat-message-" + type;
+
+        const avatar = document.createElement("div");
+        avatar.className = "chat-avatar chat-avatar-" + type;
+        const avatarIcon = document.createElement("span");
+        avatarIcon.className = "material-symbols-outlined";
+        avatarIcon.style.fontSize = "18px";
+        avatarIcon.textContent = type === "assistant" ? "smart_toy" : "person";
+        avatar.appendChild(avatarIcon);
+
+        const content = document.createElement("div");
+
+        const authorLabel = document.createElement("div");
+        authorLabel.className = "chat-author";
+        authorLabel.textContent = author;
+
+        const bubble = document.createElement("div");
+        bubble.className = "chat-bubble chat-bubble-" + type;
+        bubble.textContent = text;
+
+        content.appendChild(authorLabel);
+        content.appendChild(bubble);
+
+        if (type === "user") {
+            wrapper.appendChild(content);
+            wrapper.appendChild(avatar);
+        } else {
+            wrapper.appendChild(avatar);
+            wrapper.appendChild(content);
+        }
+
+        chatLog.appendChild(wrapper);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function addTypingIndicator() {
+        const wrapper = document.createElement("div");
+        wrapper.className = "chat-message chat-message-assistant";
+        wrapper.id = "typing-indicator";
+
+        const avatar = document.createElement("div");
+        avatar.className = "chat-avatar chat-avatar-assistant";
+        const avatarIcon = document.createElement("span");
+        avatarIcon.className = "material-symbols-outlined";
+        avatarIcon.style.fontSize = "18px";
+        avatarIcon.textContent = "smart_toy";
+        avatar.appendChild(avatarIcon);
+
+        const content = document.createElement("div");
+        const bubble = document.createElement("div");
+        bubble.className = "chat-bubble chat-bubble-assistant chat-typing";
+        bubble.innerHTML = '<div class="chat-typing-dot"></div><div class="chat-typing-dot"></div><div class="chat-typing-dot"></div>';
+
+        content.appendChild(bubble);
+        wrapper.appendChild(avatar);
+        wrapper.appendChild(content);
+
+        chatLog.appendChild(wrapper);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        const indicator = document.getElementById("typing-indicator");
+        if (indicator) indicator.remove();
+    }
+
+    function setLoading(loading) {
+        sendBtn.disabled = loading;
+        if (loading) {
+            sendIcon.classList.add("animate-spin");
+            sendIcon.textContent = "hourglass_empty";
+        } else {
+            sendIcon.classList.remove("animate-spin");
+            sendIcon.textContent = "send";
+        }
+    }
+
+    async function sendMessage(message) {
+        if (!message.trim()) return;
+
+        // Hide suggestions after first message
+        suggestionChips.style.display = "none";
+
+        addMessage("You", message, "user");
+        messageInput.value = "";
+        setLoading(true);
+        addTypingIndicator();
+
+        try {
+            const response = await fetch("/api/assistant/chat", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message}),
+            });
+
+            removeTypingIndicator();
+
+            if (!response.ok) {
+                throw new Error(`Request failed with ${response.status}`);
+            }
+
+            const data = await response.json();
+            addMessage("Assistant", data.response || "No response received.", "assistant");
+        } catch (error) {
+            removeTypingIndicator();
+            addMessage("Assistant", "I could not reach the assistant service right now. Please try again.", "assistant");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    window.sendSuggestion = function(text) {
+        messageInput.value = text;
+        sendMessage(text);
+    };
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        sendMessage(messageInput.value.trim());
+    });
+</script>
+{% endblock %}

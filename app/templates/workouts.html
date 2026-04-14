@@ -1,0 +1,311 @@
+{% extends "authenticated-base.html" %}
+
+{% block title %}Browse Workouts{% endblock %}
+
+{% block additional_styles %}
+<style>
+    .workouts-table-scroll {
+        max-height: 50vh;
+        overflow-y: auto;
+        overflow-x: auto;
+        padding: 0 !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .workouts-table-scroll thead th {
+        position: sticky;
+        top: 0;
+        background: #eef4fb;
+        z-index: 1;
+    }
+
+    .workouts-table-scroll table {
+        margin-bottom: 0;
+        min-width: 600px;
+    }
+
+    /* Mobile workout cards */
+    .workout-card-mobile {
+        display: block;
+    }
+
+    .workout-table-desktop {
+        display: none;
+    }
+
+    .workout-card-mobile .workout-item {
+        background: #fff;
+        border: 1px solid rgba(138, 179, 216, 0.35);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+    .workout-card-mobile .workout-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .workout-card-mobile .workout-title {
+        font-weight: 700;
+        color: #193354;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .workout-card-mobile .workout-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .workout-card-mobile .add-form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(138, 179, 216, 0.2);
+    }
+
+    .workout-card-mobile .add-form .form-row {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .workout-card-mobile .add-form .form-row > * {
+        flex: 1;
+    }
+
+    @media (min-width: 768px) {
+        .workouts-table-scroll {
+            max-height: 58vh;
+        }
+    }
+
+    @media (min-width: 992px) {
+        .workout-card-mobile {
+            display: none;
+        }
+
+        .workout-table-desktop {
+            display: block;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid px-0 px-md-3">
+    <div class="wm-hero">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-2">
+            <div>
+                <h2 class="page-headline">
+                    <span class="material-symbols-outlined me-2" style="vertical-align: middle;">fitness_center</span>
+                    Workout Library
+                </h2>
+                <p class="page-subtitle">Browse all workouts and add them to your routines.</p>
+            </div>
+            <a href="/routines" class="btn btn-outline-primary mobile-full">
+                <span class="material-symbols-outlined me-1" style="font-size: 18px;">folder_special</span>
+                My routines
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-3">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="material-symbols-outlined" style="color: var(--wm-accent);">filter_alt</span>
+                <span class="fw-semibold small text-muted text-uppercase">Filter Workouts</span>
+            </div>
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" name="workout_type">
+                        <option value="">All Types</option>
+                        {% for option in types %}
+                        <option value="{{ option }}" {% if selected_workout_type == option %}selected{% endif %}>{{ option|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Body part</label>
+                    <select class="form-select" name="body_part">
+                        <option value="">All Body Parts</option>
+                        {% for option in body_parts %}
+                        <option value="{{ option }}" {% if selected_body_part == option %}selected{% endif %}>{{ option|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <label class="form-label">Equipment</label>
+                    <select class="form-select" name="equipment">
+                        <option value="">All Equipment</option>
+                        {% for option in equipments %}
+                        <option value="{{ option }}" {% if selected_equipment == option %}selected{% endif %}>{{ option|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
+                    </button>
+                    <a href="/workouts" class="btn btn-outline-secondary flex-fill">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if not routines %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-warning mb-0 d-flex align-items-center gap-2">
+                <span class="material-symbols-outlined">warning</span>
+                You don't have any routines yet. Create a routine first before adding workouts.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-12">
+            {% if workouts %}
+            <!-- Mobile card view -->
+            <div class="workout-card-mobile">
+                {% for workout in workouts %}
+                <div class="workout-item">
+                    <div class="workout-title">
+                        <div class="workout-icon workout-icon-default" style="width: 32px; height: 32px;">
+                            <span class="material-symbols-outlined" style="font-size: 16px;">fitness_center</span>
+                        </div>
+                        {{ workout.title }}
+                    </div>
+                    <div class="workout-meta">
+                        <span class="badge-body-part">{{ workout.type }}</span>
+                        <span class="badge-body-part">{{ workout.body_part }}</span>
+                        <span class="badge-body-part">{{ workout.equipment }}</span>
+                        {% if workout.level == 'beginner' %}
+                        <span class="badge-body-part badge-level-beginner">{{ workout.level }}</span>
+                        {% elif workout.level == 'intermediate' %}
+                        <span class="badge-body-part badge-level-intermediate">{{ workout.level }}</span>
+                        {% else %}
+                        <span class="badge-body-part badge-level-advanced">{{ workout.level }}</span>
+                        {% endif %}
+                    </div>
+                    {% if routines %}
+                    <form method="post" action="/routines/add" class="add-form">
+                        <input type="hidden" name="workout_id" value="{{ workout.id }}">
+                        <select class="form-select form-select-sm" name="routine_id" required>
+                            <option value="" disabled selected>Select routine</option>
+                            {% for routine in routines %}
+                            <option value="{{ routine.id }}">{{ routine.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-row">
+                            <input class="form-control form-control-sm" type="number" min="1" name="sets" value="3" required placeholder="Sets">
+                            <input class="form-control form-control-sm" type="text" name="reps" value="10" required placeholder="Reps">
+                        </div>
+                        <input class="form-control form-control-sm" type="text" name="note" placeholder="Note (optional)">
+                        <button class="btn btn-sm btn-primary" type="submit">
+                            <span class="material-symbols-outlined me-1" style="font-size: 16px;">add</span>
+                            Add to Routine
+                        </button>
+                    </form>
+                    {% else %}
+                    <p class="text-muted mb-0 small">Create a routine first to add workouts.</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Desktop table view -->
+            <div class="workout-table-desktop">
+                <div class="table-responsive workouts-table-scroll shadow-sm rounded-3 bg-white">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Body part</th>
+                                <th>Equipment</th>
+                                <th>Level</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for workout in workouts %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="workout-icon workout-icon-default" style="width: 28px; height: 28px;">
+                                            <span class="material-symbols-outlined" style="font-size: 14px;">fitness_center</span>
+                                        </div>
+                                        <span class="fw-semibold">{{ workout.title }}</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge-body-part">{{ workout.type }}</span></td>
+                                <td><span class="badge-body-part">{{ workout.body_part }}</span></td>
+                                <td>{{ workout.equipment }}</td>
+                                <td>
+                                    {% if workout.level == 'beginner' %}
+                                    <span class="badge-body-part badge-level-beginner">{{ workout.level }}</span>
+                                    {% elif workout.level == 'intermediate' %}
+                                    <span class="badge-body-part badge-level-intermediate">{{ workout.level }}</span>
+                                    {% else %}
+                                    <span class="badge-body-part badge-level-advanced">{{ workout.level }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if routines %}
+                                    <form method="post" action="/routines/add" class="d-flex gap-2 align-items-center justify-content-end">
+                                        <input type="hidden" name="workout_id" value="{{ workout.id }}">
+                                        <select class="form-select form-select-sm" name="routine_id" required style="min-width: 140px;">
+                                            <option value="" disabled selected>Add to routine</option>
+                                            {% for routine in routines %}
+                                            <option value="{{ routine.id }}">{{ routine.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <input class="form-control form-control-sm" style="width: 70px;" type="number" min="1" name="sets" value="3" required title="Sets">
+                                        <input class="form-control form-control-sm" style="width: 80px;" type="text" name="reps" value="10" required title="Reps">
+                                        <input class="form-control form-control-sm" style="width: 140px;" type="text" name="note" placeholder="Note" title="Note">
+                                        <button class="btn btn-sm btn-primary" type="submit">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <span class="text-muted">Create a routine first.</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <span class="material-symbols-outlined">search_off</span>
+                        </div>
+                        <h6 class="empty-state-title">No workouts found</h6>
+                        <p class="empty-state-text">Try adjusting your filters or check back later for new workouts.</p>
+                        <a href="/workouts" class="btn btn-outline-primary">
+                            <span class="material-symbols-outlined me-1" style="font-size: 18px;">refresh</span>
+                            Clear Filters
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

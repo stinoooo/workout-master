@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Session Expired{% endblock %}
+
+
+{% block internal_css %}
+<style>
+    @import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700;900&family=Russo+One&display=swap");
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Exo 2", sans-serif;
+        background: radial-gradient(circle at 18% 10%, #1f486f 0%, #0b1f3a 46%, #050f1f 100%);
+        padding: 1rem;
+    }
+
+    .page-container {
+        min-height: calc(100vh - 2rem);
+        display: grid;
+        place-items: center;
+    }
+
+    .card-custom {
+        border: 1px solid rgba(151, 193, 231, 0.35);
+        border-radius: 1rem;
+        overflow: hidden;
+        width: min(1080px, 100%);
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    .left-section {
+        background:
+            linear-gradient(170deg, rgba(10, 31, 59, 0.88), rgba(9, 29, 56, 0.92)),
+            url("https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=1200&q=80") center/cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        padding: 2rem;
+    }
+
+    .left-section img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .right-section {
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    .left-section h2,
+    .right-section h3 {
+        font-family: "Russo One", sans-serif;
+        text-transform: uppercase;
+    }
+
+    .error-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .error-icon .material-symbols-outlined {
+        font-size: 40px;
+        color: #ef4444;
+    }
+
+    .btn-primary {
+        border: none;
+        border-radius: 0.625rem;
+        font-weight: 700;
+        background: linear-gradient(125deg, #0c50a8, #2f87f6);
+        min-height: 48px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(47, 135, 246, 0.4);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (min-width: 768px) {
+        .right-section {
+            padding: 3rem;
+        }
+
+        .left-section {
+            padding: 3rem;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container page-container d-flex align-items-center justify-content-center">
+    <div class="card shadow-lg card-custom col-lg-10">
+        <div class="row g-0">
+
+            <div class="col-lg-6 d-none d-lg-flex left-section">
+                <div class="text-center">
+                    <span class="material-symbols-outlined mb-3" style="font-size: 64px; opacity: 0.9;">lock</span>
+                    <h2 class="mt-2 fw-bold">Session Expired</h2>
+                    <p class="lead mb-0">For security reasons, please sign in again.</p>
+                </div>
+            </div>
+
+            <div class="col-lg-6 bg-white">
+                <div class="right-section d-flex flex-column justify-content-center h-100">
+                    <div class="error-icon">
+                        <span class="material-symbols-outlined">gpp_maybe</span>
+                    </div>
+                    <h1 class="display-5 fw-bold text-danger mb-2">401</h1>
+                    <h3 class="fw-semibold mb-3">Unauthorized</h3>
+                    <p class="text-muted mb-4">
+                        Your session has expired or you do not have permission to access this page.
+                        Please log in again to continue.
+                    </p>
+
+                    <div class="d-grid">
+                        <a href="{{url_for('login_view')}}" class="btn btn-primary btn-lg">
+                            <span class="material-symbols-outlined me-2" style="font-size: 20px;">login</span>
+                            Return to Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
